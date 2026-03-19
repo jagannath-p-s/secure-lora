@@ -8,6 +8,7 @@ Messages are encrypted with **ASCON-128** (NIST Lightweight Crypto Standard 2023
 
 ## Table of Contents
 
+0. **[Learning Guide](LEARNING_GUIDE.md)** — A simplified, first-principles explanation of encryption, quantum risk, and how Kyber + ASCON work (no prior crypto background required).
 1. [How It Works](#how-it-works)
 2. [Hardware Requirements](#hardware-requirements)
 3. [Sketch File Structure](#sketch-file-structure)
