@@ -31,11 +31,11 @@ Standard encrypted radios use classical cryptography (AES keys exchanged via ECD
 ┌─────────────────────────────────────────────────────────────┐
 │                   BOOT SEQUENCE (once)                       │
 │                                                             │
-│  1. ESP32 hardware TRNG generates 64 random bytes           │
-│  2. Kyber-512 expands them into a keypair:                  │
-│       Public Key  (800 bytes) ── share with anyone          │
-│       Secret Key (1632 bytes) ── never leaves device        │
-│  3. Public key is broadcast over LoRa in 4 fragments        │
+│  1. TFT and touch come up; calibration runs if first boot   │
+│  2. ESP32 hardware TRNG → Kyber-512 keypair (pk 800 B,     │
+│     sk 1632 B). Screen is already interactive.              │
+│  3. ~2 s later (in main loop) public key is broadcast      │
+│     over LoRa in 4 fragments — no blocking in setup()       │
 └─────────────────────────────────────────────────────────────┘
                             │
               (peer receives public key)
@@ -449,9 +449,9 @@ All nodes in the same network **share** the same `NETWORK_KEY`, `NETWORK_ID`, an
 
 ### First Boot
 
-1. Power on — the display shows a touch calibration screen
-2. Tap the four corner crosshairs with a stylus or fingernail
-3. Calibration is saved to SPIFFS flash (never repeats unless you erase flash)
+1. Power on — if SPIFFS has no calibration yet, the display shows **Touch corners to calibrate**.
+2. Tap the four corner crosshairs with a stylus or fingernail. Calibration is saved to SPIFFS (never repeats unless you erase flash).
+3. The main UI (status bar, chat area, text field, keyboard) appears. The device is **immediately responsive** — no long white screen. The first Kyber key exchange runs about **2 seconds after boot** in the background.
 
 ### Boot Sequence (Serial Monitor)
 
@@ -462,18 +462,24 @@ All nodes in the same network **share** the same `NETWORK_KEY`, `NETWORK_ID`, an
 [BOOT] Crypto: Kyber-512 KEM + ASCON-128 AEAD
 [LORA] Init... OK
 [TFT]  OK
-[KEM]  Generating Kyber-512 key pair...
-[KEM]  Public key (first 8 bytes): 4A 2B 9C D1 ...
-[KEM]  Keypair ready. Broadcasting public key in 2 s...
-[KEM]  Sent frag 1/4  (244 bytes)
-[KEM]  Sent frag 2/4  (244 bytes)
-[KEM]  Sent frag 3/4  (244 bytes)
-[KEM]  Sent frag 4/4  (68 bytes)
-[KEM]  Public key broadcast complete
-[BOOT] System ready.
+[KEM] Generating Kyber-512 keypair...
+[KEM] PK[0..7]: 4A 2B 9C D1 ...  (keypair ready)
+[BOOT] Ready. Key exchange in 2 s. Press [KEY] to re-exchange.
+... about 2 seconds later (in main loop) ...
+[KEM] Broadcasting Kyber-512 public key...
+[KEM] Frag 1/4 sent (244 B)
+[KEM] Frag 2/4 sent (244 B)
+[KEM] Frag 3/4 sent (244 B)
+[KEM] Frag 4/4 sent (68 B)
+[KEM] Broadcast done
 ```
 
 ### On-Screen Keyboard
+
+The keyboard has two layouts, toggled by the bottom-left key:
+
+- **Alpha layout** (default): letters Q–M; bottom row **123** · SPC · DEL · SEND  
+- **Number layout**: digits and symbols; bottom row **KEY** · SPC · DEL · SEND  
 
 ```
 ┌─────────────────────────────────┐
@@ -484,16 +490,20 @@ All nodes in the same network **share** the same `NETWORK_KEY`, `NETWORK_ID`, an
 ├─────────────────────────────────┤
 │ Type your message here...       │  ← text input field
 ├─────────────────────────────────┤
-│  Q  W  E  R  T  Y  U  I  O  P  │
-│   A  S  D  F  G  H  J  K  L    │  ← keyboard
+│  Q  W  E  R  T  Y  U  I  O  P  │  ← alpha layout
+│   A  S  D  F  G  H  J  K  L    │
 │    Z  X  C  V  B  N  M         │
-│ [KEY]  [  SPACE  ]  [DEL] [SEND]│
+│ [123]  [  SPACE  ]  [DEL] [SEND]│  ← tap 123 for numbers/symbols
 └─────────────────────────────────┘
+
+In number layout the bottom row is: [KEY] [SPACE] [DEL] [SEND]
 ```
 
 | Button | Action |
 |---|---|
-| **KEY** | Immediately re-broadcast your Kyber-512 public key to re-establish a new quantum-secure session |
+| **123** | Switch to number/symbol layout (digits, punctuation, **KEY** button) |
+| **ABC** | Switch back to letter layout |
+| **KEY** | (Number layout only.) Re-broadcast your Kyber-512 public key to re-establish a quantum-secure session |
 | **SPC** | Insert a space |
 | **DEL** | Delete last character |
 | **SEND** | Encrypt with ASCON-128 and transmit the message |
@@ -513,9 +523,10 @@ ALICE #01   [KYBER+ASCON]   S:7   -95d
 - **RSSI green** if > −100 dBm, orange if weaker
 - Incoming messages show a green `*` lock icon (ASCON tag verified)
 
-### Typing the Special KEY Command
+### Triggering Key Exchange
 
-You can also type `KEY` in the text field and press **SEND** to trigger a key re-exchange — useful if you suspect a peer missed your boot broadcast.
+- **From the keyboard:** Tap **123** to switch to the number layout, then tap **KEY**.
+- **From the text field:** Type `KEY` and press **SEND** to trigger a key re-exchange — useful if a peer missed your boot broadcast.
 
 ---
 
