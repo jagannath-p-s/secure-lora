@@ -197,23 +197,33 @@ Open **Tools → Manage Libraries** and install:
 
 ### 4. Configure TFT_eSPI
 
-The TFT_eSPI library needs to know your pin assignments:
+A pre-configured `User_Setup.h` is already included in the sketch folder — **you just need to copy it into the TFT_eSPI library folder**.  This file sets the correct driver, pin numbers, and SPI speeds for this project:
 
-1. Find the library folder:
+| Setting | Value |
+|---|---|
+| Driver | ST7789 |
+| MOSI | GPIO 23 |
+| MISO | GPIO 19 |
+| SCLK | GPIO 18 |
+| TFT CS | GPIO 15 |
+| TFT DC | GPIO 2 |
+| TFT RST | GPIO 4 |
+| Touch CS | GPIO 21 |
+| SPI speed | 27 MHz |
+| Touch SPI | 2.5 MHz |
+
+**Steps:**
+
+1. Find the TFT_eSPI library folder:
    ```bash
-   find ~/Arduino/libraries -name "User_Setup.h" -path "*/TFT_eSPI/*"
+   find ~/Arduino/libraries/TFT_eSPI -name "User_Setup.h"
    ```
-2. Open `User_Setup.h` and set your driver and pin numbers. For a typical ILI9341 2.8" display:
-   ```cpp
-   #define ILI9341_DRIVER
-   #define TFT_CS   15    // your CS pin
-   #define TFT_DC    2    // your DC/RS pin
-   #define TFT_RST   4    // your RST pin (or -1 if tied to ESP32 RST)
-   #define TOUCH_CS 21    // XPT2046 touch chip select
-   #define SPI_FREQUENCY  27000000
-   #define SPI_TOUCH_FREQUENCY  2500000
+2. Replace that file with the one from the sketch folder:
+   ```bash
+   cp /path/to/lora_copy/User_Setup.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
    ```
-3. Save the file.
+   *(Replace `/path/to/lora_copy/` with the actual path where you saved the sketch.)*
+3. That is all — do not edit anything manually.
 
 ### 5. Add USB Serial Permissions
 
@@ -297,11 +307,22 @@ After installing, plug in your ESP32 and check **Device Manager → Ports (COM &
 
 ### 5. Configure TFT_eSPI
 
-1. Find the library folder:
+A pre-configured `User_Setup.h` is included in the sketch folder. **Replace** the library's copy with it:
+
+1. Open **File Explorer** and navigate to:
    ```
-   C:\Users\<YourName>\Documents\Arduino\libraries\TFT_eSPI\User_Setup.h
+   C:\Users\<YourName>\Documents\Arduino\libraries\TFT_eSPI\
    ```
-2. Open it in Notepad++ or VS Code and configure driver + pins as described in the Linux section above.
+2. Copy the `User_Setup.h` from the sketch folder into that directory, overwriting the existing file.
+
+   Or in **Command Prompt**:
+   ```cmd
+   copy "C:\Users\<YourName>\Documents\Arduino\lora_copy\User_Setup.h" ^
+        "C:\Users\<YourName>\Documents\Arduino\libraries\TFT_eSPI\User_Setup.h"
+   ```
+3. That is all — do not edit anything manually.
+
+The file configures: **ST7789 driver**, MOSI=23, MISO=19, SCLK=18, CS=15, DC=2, RST=4, Touch CS=21, SPI 27 MHz.
 
 ### 6. Open and Configure the Sketch
 
@@ -367,11 +388,21 @@ Your device will appear as `/dev/cu.usbserial-XXXX` or `/dev/cu.SLAB_USBtoUART`.
 
 ### 5. Configure TFT_eSPI
 
+A pre-configured `User_Setup.h` is included in the sketch folder. **Replace** the library's copy with it:
+
 ```bash
-# Find User_Setup.h
-find ~/Documents/Arduino/libraries -name "User_Setup.h" -path "*/TFT_eSPI/*"
+# Find the library's User_Setup.h
+find ~/Documents/Arduino/libraries/TFT_eSPI -name "User_Setup.h"
+
+# Replace it with the project's version
+cp ~/Documents/Arduino/lora_copy/User_Setup.h \
+   ~/Documents/Arduino/libraries/TFT_eSPI/User_Setup.h
 ```
-Edit the file with your pin numbers (same configuration as Linux section).
+
+*(Adjust the source path if you saved the sketch elsewhere.)*
+That is all — do not edit anything manually.
+
+The file configures: **ST7789 driver**, MOSI=23, MISO=19, SCLK=18, CS=15, DC=2, RST=4, Touch CS=21, SPI 27 MHz.
 
 ### 6. Open and Configure the Sketch
 
@@ -596,8 +627,8 @@ Before the Kyber handshake completes (first few seconds after boot), messages ar
 
 ### Display blank or corrupted
 
-- Verify `User_Setup.h` in TFT_eSPI library has the correct driver (`#define ILI9341_DRIVER`) and pin numbers
-- Try rotation values 0–3 by changing `tft.setRotation(X)` in `setup()`
+- Make sure you **replaced** `User_Setup.h` in the TFT_eSPI library folder with the one from the sketch folder (see Setup step 4/5). If the library still has its default `User_Setup.h` the display will be blank or show garbage.
+- Try rotation values 0–3 by changing `tft.setRotation(X)` in `setup()` if the image is upside-down or mirrored.
 
 ### Touch not responding
 
